@@ -1,0 +1,99 @@
+Sub CollectCells()
+    Dim referenceRange As Range
+    Dim cellAddress As String
+    Dim baseCell As Range
+    Dim cellMapping As Collection
+    Debug.Print "------------------------------------------------------------------------"
+    Debug.Print "-- Start: " + strip(ActiveCell.Address)
+    Set referenceRange = ActiveCell.Precedents
+    Set cellMapping = New Collection
+    Call findCellUpperMapping(cellMapping, ActiveCell)
+    For Each baseCell In referenceRange
+        Call findCellUpperMapping(cellMapping, baseCell)
+    Next
+    Call addCellMapping(cellMapping, "=", "")
+    Call addCellMapping(cellMapping, "SQRT", "sqrt")
+    Call addCellMapping(cellMapping, "SIN", "sin")
+    Call addCellMapping(cellMapping, "COS", "cos")
+    Call addCellMapping(cellMapping, "PI()", "pi")
+    Call addCellMapping(cellMapping, "3.141592654", "pi")
+    Call addCellMapping(cellMapping, "^", "**")
+    Call addCellMapping(cellMapping, "1,60217653E-19", "e")
+    Call addCellMapping(cellMapping, "1.602189246E-19", "e")
+    Call addCellMapping(cellMapping, "1,05457168E-34", "h_bar")
+    Call addCellMapping(cellMapping, "1.054588757E-34", "h_bar")
+    Call addCellMapping(cellMapping, "9.10953447E-31", "m_e")
+    Call addCellMapping(cellMapping, "5,291772108E-11", "a_0")
+    Call addCellMapping(cellMapping, "5.291770644E-11", "a_0")
+    Call addCellMapping(cellMapping, "2,0023193043718", "g")
+    Call addCellMapping(cellMapping, "0,007297352568", "alpha")
+    Call addCellMapping(cellMapping, "299792458", "c")
+    Call addCellMapping(cellMapping, "1,67262171E-27", "m_P")
+    Call addCellMapping(cellMapping, "8,854187817E-12", "epsilon_0")
+    Call addCellMapping(cellMapping, "8.854187827E-12", "epsilon_0")
+    'Call addCellMapping(cellMapping, "XXX", "XXX")
+    For Each x In cellMapping
+        'Debug.Print "// " + x(1) + " -> " + x(2)
+    Next
+    Dim referencedCell As Range
+    Dim result As String
+    result = ""
+    result = formulaToString(cellMapping, ActiveCell) + result
+    For Each referencedCell In referenceRange
+        result = formulaToString(cellMapping, referencedCell) + result
+    Next
+    Debug.Print result
+End Sub
+
+Function formulaToString(ByRef cellMapping As Collection, ByRef referencedCell As Range) As String
+    Dim cellAddress As String
+    Dim cellFormula As String
+    Dim mappedAddress As String
+    Dim mappedFormula As String
+    cellAddress = strip(referencedCell.Address)
+    cellFormula = strip(CStr(referencedCell.Formula))
+    mappedAddress = reMap(cellMapping, cellAddress)
+    mappedFormula = reMap(cellMapping, cellFormula)
+    formulaToString = ""
+    'formulaToString = formulaToString + "// " + cellAddress + ": " + cellFormula + Chr(13) + Chr(10)
+    formulaToString = formulaToString + "double " + mappedAddress + " = " + mappedFormula + ";" + Chr(13) + Chr(10)
+End Function
+
+Sub findCellUpperMapping(ByRef cellMapping As Collection, ByRef baseCell As Range)
+    Dim i As Integer
+    Dim cellName As String
+    Dim cellAddress As String
+    Dim upperCell As Range
+    i = 0
+    cellName = ""
+    Do
+        Set upperCell = baseCell.Offset(-i, 0)
+        If upperCell.Offset(-1, 0).Value = "" Then
+            cellAddress = CStr(strip(CStr(baseCell.Address)))
+            cellName = CStr(upperCell.Value)
+            Call addCellMapping(cellMapping, cellAddress, cellName)
+            Exit Do
+        End If
+        i = i + 1
+    Loop
+    'Debug.Print "// " + cellName + " " + strip(baseCell.Address) + ": " + strip(CStr(baseCell.Formula))
+End Sub
+
+Sub addCellMapping(ByRef cellMapping As Collection, a As String, b As String)
+    Dim map() As String
+    ReDim map(1 To 2)
+    map(1) = a
+    map(2) = b
+    cellMapping.Add map
+End Sub
+
+Function strip(x As String) As String
+    strip = Replace(x, "$", "")
+End Function
+
+Function reMap(ByRef cellMapping As Collection, ByVal x As String) As String
+    For Each map In cellMapping
+        x = Replace(x, map(1), map(2))
+    Next
+    reMap = x
+End Function

@@ -1,0 +1,30 @@
+plugins {
+	id 'java'
+	id 'eclipse-wtp'
+	id 'application'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
+	compile 'org.jsoup:jsoup:1.11.2'
+	compile 'org.freemarker:freemarker:2.3.27-incubating'
+}
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+compileJava.options.encoding = 'UTF-8'
+mainClassName = 'io.github.henningb.gutcp.Main'
+
+eclipse {
+	project {
+		natures 'org.eclipse.buildship.core.gradleprojectnature'
+	}
+}
+
+task refreshEclipse(dependsOn: ['cleanEclipse', 'eclipse']) {
+}
